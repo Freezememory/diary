@@ -54,7 +54,7 @@
       <el-carousel :height="'240px'" :autoplay="false" indicator-position="outside">
         <el-carousel-item v-for="img in images" :key="img.id">
           <div class="carousel-item-inner">
-            <el-image :src="img.imageUrl" fit="contain" :preview-src-list="images.map(i => i.imageUrl)"
+            <el-image :src="resolveImageUrl(img.imageUrl)" fit="contain" :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
               :preview-src-list-index="images.indexOf(img)" />
             <el-button class="carousel-delete-btn" text type="danger" size="small"
               @click="handleDeleteImage(img.id)">
@@ -73,6 +73,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import { getCategories, getItems, createItem, toggleItem, deleteItem,
   getContent, saveContent, getImages, uploadImage, deleteImage } from '../api/diary'
+import { resolveImageUrl } from '../utils/request'
 
 const currentDate = ref(dayjs().format('YYYY-MM-DD'))
 const activeTab = ref('checklist')

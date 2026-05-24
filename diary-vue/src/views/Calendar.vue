@@ -28,8 +28,8 @@
 
         <h3 style="margin-top: 20px;">图片</h3>
         <div class="image-list">
-          <el-image v-for="img in selectedImages" :key="img.id" :src="img.imageUrl"
-            fit="cover" :preview-src-list="selectedImages.map(i => i.imageUrl)" />
+          <el-image v-for="img in selectedImages" :key="img.id" :src="resolveImageUrl(img.imageUrl)"
+            fit="cover" :preview-src-list="selectedImages.map(i => resolveImageUrl(i.imageUrl))" />
         </div>
         <el-empty v-if="selectedImages.length === 0" description="无图片" />
       </div>
@@ -41,6 +41,7 @@
 import { ref, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { getCalendarDates, getCategories, getItems, getContent, getImages } from '../api/diary'
+import { resolveImageUrl } from '../utils/request'
 
 const currentDate = ref(new Date())
 const diaryDates = ref([])

@@ -34,4 +34,12 @@ request.interceptors.response.use(
   }
 )
 
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
+export function resolveImageUrl(path) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return IMAGE_BASE + path
+}
+
 export default request
