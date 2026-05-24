@@ -1,8 +1,9 @@
 <template>
   <div class="calendar-page">
-    <el-calendar v-model="currentDate" @day-click="handleDateClick">
+    <el-calendar v-model="currentDate">
       <template #date-cell="{ data }">
-        <div class="calendar-cell" :class="{ 'has-diary': isDiaryDate(data.day) }">
+        <div class="calendar-cell" :class="{ 'has-diary': isDiaryDate(data.day) }"
+          @click.stop="handleDateClick(data.day)">
           {{ data.day.split('-')[2] }}
           <div v-if="isDiaryDate(data.day)" class="diary-dot"></div>
         </div>
@@ -69,8 +70,7 @@ async function loadCalendarDates() {
   }
 }
 
-async function handleDateClick(dayObj) {
-  const date = dayObj.day || dayObj
+async function handleDateClick(date) {
   selectedDate.value = date
   try {
     const [catRes, itemRes, contentRes, imgRes] = await Promise.allSettled([
