@@ -106,6 +106,7 @@ function getItemsByCategory(categoryId) {
 
 function changeDate(delta) {
   currentDate.value = dayjs(currentDate.value).add(delta, 'day').format('YYYY-MM-DD')
+  loadData()
 }
 
 async function loadData() {
