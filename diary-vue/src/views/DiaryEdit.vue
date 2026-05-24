@@ -51,11 +51,13 @@
     </el-tabs>
 
     <div v-if="images.length > 0" class="image-carousel-wrap">
-      <el-carousel :height="'240px'" :autoplay="false" indicator-position="outside">
+      <el-carousel :height="'160px'" :autoplay="false" indicator-position="outside">
         <el-carousel-item v-for="img in images" :key="img.id">
           <div class="carousel-item-inner">
-            <el-image :src="resolveImageUrl(img.imageUrl)" fit="contain" :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
-              :preview-src-list-index="images.indexOf(img)" />
+            <el-image :src="resolveImageUrl(img.imageUrl)" fit="contain"
+              :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
+              :preview-src-list-index="images.indexOf(img)"
+              class="carousel-img" />
             <el-button class="carousel-delete-btn" text type="danger" size="small"
               @click="handleDeleteImage(img.id)">
               <el-icon><Delete /></el-icon>
@@ -239,6 +241,7 @@ onUnmounted(() => clearTimeout(saveTimer))
 }
 .image-carousel-wrap {
   margin-top: 10px;
+  max-width: 400px;
 }
 .carousel-item-inner {
   height: 100%;
@@ -246,9 +249,12 @@ onUnmounted(() => clearTimeout(saveTimer))
   align-items: center;
   justify-content: center;
   position: relative;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
-.carousel-item-inner .el-image {
-  max-height: 240px;
+.carousel-img {
+  height: 160px;
+  cursor: pointer;
 }
 .carousel-delete-btn {
   position: absolute;
@@ -256,6 +262,7 @@ onUnmounted(() => clearTimeout(saveTimer))
   right: 8px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 4px;
+  z-index: 1;
 }
 
 @media (max-width: 768px) {
