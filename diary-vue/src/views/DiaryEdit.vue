@@ -57,9 +57,10 @@
             <el-image :src="resolveImageUrl(img.imageUrl)" fit="contain"
               :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
               :preview-src-list-index="images.indexOf(img)"
+              preview-teleported
               class="carousel-img" />
             <el-button class="carousel-delete-btn" text type="danger" size="small"
-              @click="handleDeleteImage(img.id)">
+              @click.stop="handleDeleteImage(img.id)">
               <el-icon><Delete /></el-icon>
             </el-button>
           </div>
@@ -250,10 +251,9 @@ onUnmounted(() => clearTimeout(saveTimer))
   justify-content: center;
   position: relative;
   background: #f5f7fa;
-  border-radius: 4px;
 }
 .carousel-img {
-  height: 160px;
+  height: 100%;
   cursor: pointer;
 }
 .carousel-delete-btn {
