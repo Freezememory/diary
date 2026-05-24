@@ -115,7 +115,7 @@ async function handleRegister() {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 .login-card {
-  width: 400px;
+  width: min(400px, 90vw);
 }
 h2 {
   text-align: center;

@@ -12,7 +12,7 @@
     </div>
 
     <el-row :gutter="20">
-      <el-col :span="12">
+      <el-col :xs="24" :sm="24" :md="12">
         <el-card class="section-card">
           <template #header>
             <div class="card-header">
@@ -45,7 +45,7 @@
           <el-empty v-if="items.length === 0" description="暂无清单" />
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :xs="24" :sm="24" :md="12">
         <el-card class="section-card">
           <template #header>
             <span>日记</span>
@@ -270,5 +270,21 @@ onUnmounted(() => clearTimeout(saveTimer))
   position: absolute;
   top: 0;
   right: 0;
+}
+
+@media (max-width: 768px) {
+  .diary-edit {
+    padding: 12px;
+  }
+  .image-item {
+    width: 80px;
+    height: 80px;
+  }
+  .date-header {
+    gap: 5px;
+  }
+  .add-item-row {
+    flex-direction: column;
+  }
 }
 </style>
