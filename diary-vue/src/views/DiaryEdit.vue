@@ -17,7 +17,6 @@
           <template #header>
             <div class="card-header">
               <span>清单</span>
-              <el-button type="primary" size="small" @click="showAddItem">新增</el-button>
             </div>
           </template>
           <div v-for="category in categories" :key="category.id" class="category-group">
@@ -29,6 +28,17 @@
               </el-checkbox>
               <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
                 <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+            <div class="add-item-row">
+              <el-input
+                v-model="newItemContents[category.id]"
+                placeholder="输入新内容..."
+                size="small"
+                @keyup.enter="handleAddItemInline(category.id)"
+              />
+              <el-button type="primary" size="small" @click="handleAddItemInline(category.id)">
+                提交
               </el-button>
             </div>
           </div>
@@ -66,27 +76,11 @@
       </el-col>
     </el-row>
 
-    <el-dialog v-model="itemDialogVisible" title="新增清单" width="400px">
-      <el-form :model="itemForm">
-        <el-form-item label="分类">
-          <el-select v-model="itemForm.categoryId" placeholder="选择分类">
-            <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="内容">
-          <el-input v-model="itemForm.content" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="itemDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAddItem">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import { getCategories, getItems, createItem, toggleItem, deleteItem,
@@ -97,8 +91,7 @@ const categories = ref([])
 const items = ref([])
 const textContent = ref('')
 const images = ref([])
-const itemDialogVisible = ref(false)
-const itemForm = reactive({ categoryId: null, content: '' })
+const newItemContents = reactive({})
 
 function getItemsByCategory(categoryId) {
   return items.value.filter(item => item.categoryId === categoryId)
@@ -127,24 +120,27 @@ async function loadData() {
   }
 }
 
-function showAddItem() {
-  itemForm.categoryId = categories.value[0]?.id
-  itemForm.content = ''
-  itemDialogVisible.value = true
-}
+watch(categories, (newCats) => {
+  newCats.forEach(cat => {
+    if (!(cat.id in newItemContents)) {
+      newItemContents[cat.id] = ''
+    }
+  })
+}, { immediate: true })
 
-async function handleAddItem() {
-  if (!itemForm.categoryId || !itemForm.content) {
-    ElMessage.warning('请选择分类并输入内容')
+async function handleAddItemInline(categoryId) {
+  const content = newItemContents[categoryId]?.trim()
+  if (!content) {
+    ElMessage.warning('请输入内容')
     return
   }
   try {
     await createItem({
-      categoryId: itemForm.categoryId,
+      categoryId,
       diaryDate: currentDate.value,
-      content: itemForm.content
+      content
     })
-    itemDialogVisible.value = false
+    newItemContents[categoryId] = ''
     ElMessage.success('添加成功')
     loadData()
   } catch (e) {
@@ -247,6 +243,14 @@ onUnmounted(() => clearTimeout(saveTimer))
   background-color: #f0f9eb;
   border-radius: 4px;
   padding: 2px 8px;
+}
+.add-item-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.add-item-row .el-input {
+  flex: 1;
 }
 .image-list {
   display: flex;
