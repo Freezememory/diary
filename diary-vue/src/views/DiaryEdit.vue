@@ -9,73 +9,61 @@
       <el-button @click="changeDate(1)">
         <el-icon><ArrowRight /></el-icon>
       </el-button>
+      <el-upload :show-file-list="false" :before-upload="handleUpload">
+        <el-button type="primary" size="small">
+          <el-icon><Upload /></el-icon>
+          上传图片
+        </el-button>
+      </el-upload>
     </div>
 
-    <el-row :gutter="20">
-      <el-col :xs="24" :sm="24" :md="12">
-        <el-card class="section-card">
-          <template #header>
-            <div class="card-header">
-              <span>清单</span>
-            </div>
-          </template>
-          <div v-for="category in categories" :key="category.id" class="category-group">
-            <h4>{{ category.name }}</h4>
-            <div v-for="item in getItemsByCategory(category.id)" :key="item.id" class="item-row">
-              <el-checkbox v-model="item.isDone" :true-value="1" :false-value="0"
-                @change="handleToggle(item)">
-                <span :class="{ done: item.isDone === 1 }">{{ item.content }}</span>
-              </el-checkbox>
-              <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </div>
-            <div class="add-item-row">
-              <el-input
-                v-model="newItemContents[category.id]"
-                placeholder="输入新内容..."
-                size="small"
-                @keyup.enter="handleAddItemInline(category.id)"
-              />
-              <el-button type="primary" size="small" @click="handleAddItemInline(category.id)">
-                提交
-              </el-button>
-            </div>
+    <el-tabs v-model="activeTab" class="main-tabs">
+      <el-tab-pane label="清单" name="checklist">
+        <div v-for="category in categories" :key="category.id" class="category-group">
+          <h4>{{ category.name }}</h4>
+          <div v-for="item in getItemsByCategory(category.id)" :key="item.id" class="item-row">
+            <el-checkbox v-model="item.isDone" :true-value="1" :false-value="0"
+              @change="handleToggle(item)">
+              <span :class="{ done: item.isDone === 1 }">{{ item.content }}</span>
+            </el-checkbox>
+            <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
+              <el-icon><Delete /></el-icon>
+            </el-button>
           </div>
-          <el-empty v-if="items.length === 0" description="暂无清单" />
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="12">
-        <el-card class="section-card">
-          <template #header>
-            <span>日记</span>
-          </template>
-          <el-input v-model="textContent" type="textarea" :rows="10" placeholder="记录今天的想法..."
-            @blur="handleSaveContent" />
-        </el-card>
-        <el-card class="section-card" style="margin-top: 20px;">
-          <template #header>
-            <div class="card-header">
-              <span>图片</span>
-              <el-upload :show-file-list="false" :before-upload="handleUpload">
-                <el-button type="primary" size="small">上传</el-button>
-              </el-upload>
-            </div>
-          </template>
-          <div class="image-list">
-            <div v-for="img in images" :key="img.id" class="image-item">
-              <el-image :src="img.imageUrl" fit="cover" :preview-src-list="[img.imageUrl]" />
-              <el-button class="delete-btn" text type="danger" size="small"
-                @click="handleDeleteImage(img.id)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </div>
+          <div class="add-item-row">
+            <el-input
+              v-model="newItemContents[category.id]"
+              placeholder="输入新内容..."
+              size="small"
+              @keyup.enter="handleAddItemInline(category.id)"
+            />
+            <el-button type="primary" size="small" @click="handleAddItemInline(category.id)">
+              提交
+            </el-button>
           </div>
-          <el-empty v-if="images.length === 0" description="暂无图片" />
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+        <el-empty v-if="items.length === 0" description="暂无清单" />
+      </el-tab-pane>
+      <el-tab-pane label="日记" name="diary">
+        <el-input v-model="textContent" type="textarea" :rows="15" placeholder="记录今天的想法..."
+          @blur="handleSaveContent" />
+      </el-tab-pane>
+    </el-tabs>
 
+    <div v-if="images.length > 0" class="image-carousel-wrap">
+      <el-carousel :height="'240px'" :autoplay="false" indicator-position="outside">
+        <el-carousel-item v-for="img in images" :key="img.id">
+          <div class="carousel-item-inner">
+            <el-image :src="img.imageUrl" fit="contain" :preview-src-list="images.map(i => i.imageUrl)"
+              :preview-src-list-index="images.indexOf(img)" />
+            <el-button class="carousel-delete-btn" text type="danger" size="small"
+              @click="handleDeleteImage(img.id)">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+    </div>
   </div>
 </template>
 
@@ -87,6 +75,7 @@ import { getCategories, getItems, createItem, toggleItem, deleteItem,
   getContent, saveContent, getImages, uploadImage, deleteImage } from '../api/diary'
 
 const currentDate = ref(dayjs().format('YYYY-MM-DD'))
+const activeTab = ref('checklist')
 const categories = ref([])
 const items = ref([])
 const textContent = ref('')
@@ -218,13 +207,8 @@ onUnmounted(() => clearTimeout(saveTimer))
   gap: 10px;
   margin-bottom: 20px;
 }
-.section-card {
+.main-tabs {
   margin-bottom: 20px;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 .category-group {
   margin-bottom: 15px;
@@ -252,36 +236,34 @@ onUnmounted(() => clearTimeout(saveTimer))
 .add-item-row .el-input {
   flex: 1;
 }
-.image-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.image-carousel-wrap {
+  margin-top: 10px;
 }
-.image-item {
-  position: relative;
-  width: 100px;
-  height: 100px;
-}
-.image-item .el-image {
-  width: 100%;
+.carousel-item-inner {
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
-.delete-btn {
+.carousel-item-inner .el-image {
+  max-height: 240px;
+}
+.carousel-delete-btn {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {
   .diary-edit {
     padding: 12px;
   }
-  .image-item {
-    width: 80px;
-    height: 80px;
-  }
   .date-header {
     gap: 5px;
+    flex-wrap: wrap;
   }
   .add-item-row {
     flex-direction: column;
