@@ -244,8 +244,9 @@ onUnmounted(() => clearTimeout(saveTimer))
   padding: 5px 0;
 }
 .done {
-  text-decoration: line-through;
-  color: #999;
+  background-color: #f0f9eb;
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 .image-list {
   display: flex;
