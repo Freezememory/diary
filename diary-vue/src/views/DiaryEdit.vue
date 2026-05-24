@@ -241,7 +241,7 @@ onUnmounted(() => clearTimeout(saveTimer))
   flex: 1;
 }
 .image-carousel-wrap {
-  margin-top: 10px;
+  margin: 10px auto 0;
   max-width: 400px;
 }
 .carousel-item-inner {
