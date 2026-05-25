@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <el-card class="login-card">
-      <h2>日记系统</h2>
+      <h2>随风</h2>
       <el-tabs v-model="activeTab">
         <el-tab-pane label="登录" name="login">
           <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">

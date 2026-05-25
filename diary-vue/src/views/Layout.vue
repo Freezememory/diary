@@ -3,7 +3,7 @@
     <el-header>
       <div class="header-left">
         <el-icon class="hamburger" @click="sidebarVisible = true"><Operation /></el-icon>
-        <h1>日记系统</h1>
+        <h1>随风</h1>
       </div>
       <div class="header-right">
         <span>{{ userStore.userInfo?.nickname }}</span>
@@ -20,7 +20,7 @@
           </el-menu-item>
           <el-menu-item index="/calendar">
             <el-icon><Calendar /></el-icon>
-            <span>日历查看</span>
+            <span>往事</span>
           </el-menu-item>
           <el-menu-item index="/category">
             <el-icon><Setting /></el-icon>
@@ -37,7 +37,7 @@
           </el-menu-item>
           <el-menu-item index="/calendar">
             <el-icon><Calendar /></el-icon>
-            <span>日历查看</span>
+            <span>往事</span>
           </el-menu-item>
           <el-menu-item index="/category">
             <el-icon><Setting /></el-icon>
