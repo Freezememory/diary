@@ -15,6 +15,10 @@ spring:
           uri: http://localhost:8082
           predicates:
             - Path=/api/diary/**
+      httpclient:
+        max-in-memory-size: 10MB
+  codec:
+    max-in-memory-size: 10MB
 
 jwt:
   secret: diary-system-secret-key-must-be-at-least-256-bits-long!!
