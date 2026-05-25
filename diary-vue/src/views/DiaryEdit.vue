@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import { getCategories, getItems, createItem, toggleItem, deleteItem, updateItem,
@@ -202,15 +202,27 @@ async function handleDeleteItem(id) {
   }
 }
 
-function startEdit(item) {
+const editInputRef = ref(null)
+const isSaving = ref(false)
+
+async function startEdit(item) {
   editingItemId.value = item.id
   editContent.value = item.content
+  await nextTick()
+  const inputEl = editInputRef.value
+  if (inputEl) {
+    const el = Array.isArray(inputEl) ? inputEl[0]?.$el : inputEl.$el
+    el?.querySelector('input')?.focus()
+  }
 }
 
 async function saveEdit(item) {
+  if (isSaving.value) return
+  isSaving.value = true
   const newContent = editContent.value.trim()
   if (!newContent || newContent === item.content) {
     editingItemId.value = null
+    isSaving.value = false
     return
   }
   try {
@@ -220,6 +232,8 @@ async function saveEdit(item) {
     loadData()
   } catch (e) {
     console.error('修改清单失败', e)
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -305,6 +319,9 @@ onUnmounted(() => clearTimeout(saveTimer))
 }
 .item-text:hover {
   color: #409eff;
+}
+.item-row :deep(.el-input__inner) {
+  font-size: 16px;
 }
 :deep(.el-checkbox.is-checked .el-checkbox__inner) {
   background-color: #67c23a;
