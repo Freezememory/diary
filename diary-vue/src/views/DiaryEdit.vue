@@ -5,7 +5,7 @@
         <el-icon><ArrowLeft /></el-icon>
       </el-button>
       <el-date-picker v-model="currentDate" type="date" format="YYYY-MM-DD" value-format="YYYY-MM-DD"
-        @change="loadData" />
+        :clearable="false" @change="loadData" />
       <el-button @click="changeDate(1)">
         <el-icon><ArrowRight /></el-icon>
       </el-button>
@@ -239,6 +239,9 @@ onUnmounted(() => clearTimeout(saveTimer))
 }
 .add-item-row .el-input {
   flex: 1;
+}
+.add-item-row .el-input__inner {
+  font-size: 16px;
 }
 .image-carousel-wrap {
   margin: 10px auto 0;
