@@ -19,30 +19,61 @@
 
     <el-tabs v-model="activeTab" class="main-tabs">
       <el-tab-pane label="清单" name="checklist">
-        <div v-for="category in categories" :key="category.id" class="category-group">
-          <h4>{{ category.name }}</h4>
-          <div v-for="item in getItemsByCategory(category.id)" :key="item.id" class="item-row">
-            <el-checkbox v-model="item.isDone" :true-value="1" :false-value="0"
-              @change="handleToggle(item)">
-              <span :class="{ done: item.isDone === 1 }">{{ item.content }}</span>
-            </el-checkbox>
-            <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
-              <el-icon><Delete /></el-icon>
-            </el-button>
-          </div>
-          <div class="add-item-row">
-            <el-input
-              v-model="newItemContents[category.id]"
-              placeholder="输入新内容..."
-              size="small"
-              @keyup.enter="handleAddItemInline(category.id)"
-            />
-            <el-button type="primary" size="small" @click="handleAddItemInline(category.id)">
-              提交
-            </el-button>
-          </div>
-        </div>
-        <el-empty v-if="items.length === 0" description="暂无清单" />
+        <el-tabs v-model="checklistTab" class="checklist-sub-tabs">
+          <el-tab-pane label="待办" name="pending">
+            <div v-for="category in categories" :key="category.id" class="category-group">
+              <h4>{{ category.name }}</h4>
+              <div v-for="item in getFilteredItemsByCategory(category.id)" :key="item.id" class="item-row">
+                <el-checkbox v-model="item.isDone" :true-value="1" :false-value="0"
+                  @change="handleToggle(item)">
+                  <template v-if="editingItemId === item.id">
+                    <el-input v-model="editContent" size="small" @keyup.enter="saveEdit(item)"
+                      @blur="saveEdit(item)" @keyup.esc="cancelEdit" ref="editInputRef" autofocus />
+                  </template>
+                  <template v-else>
+                    <span class="item-text" @click.stop="startEdit(item)">{{ item.content }}</span>
+                  </template>
+                </el-checkbox>
+                <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+              <div class="add-item-row">
+                <el-input
+                  v-model="newItemContents[category.id]"
+                  placeholder="输入新内容..."
+                  size="small"
+                  @keyup.enter="handleAddItemInline(category.id)"
+                />
+                <el-button type="primary" size="small" @click="handleAddItemInline(category.id)">
+                  提交
+                </el-button>
+              </div>
+            </div>
+            <el-empty v-if="filteredItems.length === 0" description="暂无待办清单" />
+          </el-tab-pane>
+          <el-tab-pane label="已办" name="completed">
+            <div v-for="category in categories" :key="category.id" class="category-group">
+              <h4>{{ category.name }}</h4>
+              <div v-for="item in getFilteredItemsByCategory(category.id)" :key="item.id" class="item-row">
+                <el-checkbox v-model="item.isDone" :true-value="1" :false-value="0"
+                  @change="handleToggle(item)">
+                  <template v-if="editingItemId === item.id">
+                    <el-input v-model="editContent" size="small" @keyup.enter="saveEdit(item)"
+                      @blur="saveEdit(item)" @keyup.esc="cancelEdit" ref="editInputRef" autofocus />
+                  </template>
+                  <template v-else>
+                    <span class="item-text done" @click.stop="startEdit(item)">{{ item.content }}</span>
+                  </template>
+                </el-checkbox>
+                <el-button text type="danger" size="small" @click="handleDeleteItem(item.id)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+            </div>
+            <el-empty v-if="filteredItems.length === 0" description="暂无已办清单" />
+          </el-tab-pane>
+        </el-tabs>
       </el-tab-pane>
       <el-tab-pane label="日记" name="diary">
         <el-input v-model="textContent" type="textarea" :rows="15" placeholder="记录今天的想法..."
@@ -71,10 +102,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
-import { getCategories, getItems, createItem, toggleItem, deleteItem,
+import { getCategories, getItems, createItem, toggleItem, deleteItem, updateItem,
   getContent, saveContent, getImages, uploadImage, deleteImage } from '../api/diary'
 import { resolveImageUrl } from '../utils/request'
 
@@ -85,9 +116,18 @@ const items = ref([])
 const textContent = ref('')
 const images = ref([])
 const newItemContents = reactive({})
+const editingItemId = ref(null)
+const editContent = ref('')
+const checklistTab = ref('pending')
 
-function getItemsByCategory(categoryId) {
-  return items.value.filter(item => item.categoryId === categoryId)
+const filteredItems = computed(() => {
+  return checklistTab.value === 'pending'
+    ? items.value.filter(i => i.isDone === 0)
+    : items.value.filter(i => i.isDone === 1)
+})
+
+function getFilteredItemsByCategory(categoryId) {
+  return filteredItems.value.filter(item => item.categoryId === categoryId)
 }
 
 function changeDate(delta) {
@@ -162,6 +202,32 @@ async function handleDeleteItem(id) {
   }
 }
 
+function startEdit(item) {
+  editingItemId.value = item.id
+  editContent.value = item.content
+}
+
+async function saveEdit(item) {
+  const newContent = editContent.value.trim()
+  if (!newContent || newContent === item.content) {
+    editingItemId.value = null
+    return
+  }
+  try {
+    await updateItem(item.id, { content: newContent })
+    ElMessage.success('修改成功')
+    editingItemId.value = null
+    loadData()
+  } catch (e) {
+    console.error('修改清单失败', e)
+  }
+}
+
+function cancelEdit() {
+  editingItemId.value = null
+  editContent.value = ''
+}
+
 let saveTimer = null
 function handleSaveContent() {
   clearTimeout(saveTimer)
@@ -230,6 +296,15 @@ onUnmounted(() => clearTimeout(saveTimer))
 .done {
   text-decoration: line-through;
   color: #999;
+}
+.checklist-sub-tabs {
+  margin-bottom: 10px;
+}
+.item-text {
+  cursor: pointer;
+}
+.item-text:hover {
+  color: #409eff;
 }
 :deep(.el-checkbox.is-checked .el-checkbox__inner) {
   background-color: #67c23a;
