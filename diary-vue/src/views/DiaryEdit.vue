@@ -228,9 +228,15 @@ onUnmounted(() => clearTimeout(saveTimer))
   padding: 5px 0;
 }
 .done {
-  background-color: #f0f9eb;
-  border-radius: 4px;
-  padding: 2px 8px;
+  text-decoration: line-through;
+  color: #999;
+}
+:deep(.el-checkbox.is-checked .el-checkbox__inner) {
+  background-color: #67c23a;
+  border-color: #67c23a;
+}
+:deep(.el-checkbox.is-checked .el-checkbox__label) {
+  color: #999;
 }
 .add-item-row {
   display: flex;
