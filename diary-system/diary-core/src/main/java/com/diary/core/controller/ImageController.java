@@ -24,7 +24,7 @@ public class ImageController {
 
     private final DiaryImageService imageService;
 
-    @Value("${diary.image.upload-path:./uploads/images}")
+    @Value("${diary.image.upload-path:/data/images/uploads/images}")
     private String uploadPath;
 
     @GetMapping
@@ -47,7 +47,7 @@ public class ImageController {
         Files.createDirectories(uploadDir);
         Files.copy(file.getInputStream(), uploadDir.resolve(fileName));
 
-        String imageUrl = "/uploads/images/" + fileName;
+        String imageUrl = "/images/uploads/images/" + fileName;
         DiaryImage image = imageService.upload(userId, date, imageUrl);
         return R.ok(image);
     }

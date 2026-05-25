@@ -6,9 +6,9 @@ spring:
     name: diary-core
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/diary?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
+    url: jdbc:mysql://43.139.4.86:3306/diary?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: wanglj
+    password: Abc123@com1
   servlet:
     multipart:
       max-file-size: 10MB
@@ -25,7 +25,7 @@ mybatis-plus:
 
 diary:
   image:
-    upload-path: ./uploads/images
+    upload-path: /data/images/uploads/images
 
 logging:
   level:
