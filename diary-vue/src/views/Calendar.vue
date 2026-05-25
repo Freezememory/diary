@@ -9,55 +9,21 @@
         </div>
       </template>
     </el-calendar>
-
-    <el-dialog v-model="dialogVisible" :title="selectedDate + ' 日记'" width="60%">
-      <div v-if="selectedDiary">
-        <h3>清单</h3>
-        <div v-for="category in selectedCategories" :key="category.id" class="category-group">
-          <h4>{{ category.name }}</h4>
-          <div v-for="item in getItemsByCategory(category.id)" :key="item.id" class="item-row">
-            <el-checkbox :model-value="item.isDone === 1" disabled>
-              <span :class="{ done: item.isDone === 1 }">{{ item.content }}</span>
-            </el-checkbox>
-          </div>
-        </div>
-        <el-empty v-if="selectedItems.length === 0" description="无清单" />
-
-        <h3 style="margin-top: 20px;">日记</h3>
-        <p>{{ selectedDiary.textContent || '无内容' }}</p>
-
-        <h3 style="margin-top: 20px;">图片</h3>
-        <div class="image-list">
-          <el-image v-for="img in selectedImages" :key="img.id" :src="resolveImageUrl(img.imageUrl)"
-            fit="cover" :preview-src-list="selectedImages.map(i => resolveImageUrl(i.imageUrl))" />
-        </div>
-        <el-empty v-if="selectedImages.length === 0" description="无图片" />
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { getCalendarDates, getCategories, getItems, getContent, getImages } from '../api/diary'
-import { resolveImageUrl } from '../utils/request'
+import { getCalendarDates } from '../api/diary'
 
+const router = useRouter()
 const currentDate = ref(new Date())
 const diaryDates = ref([])
-const dialogVisible = ref(false)
-const selectedDate = ref('')
-const selectedDiary = ref(null)
-const selectedItems = ref([])
-const selectedCategories = ref([])
-const selectedImages = ref([])
 
 function isDiaryDate(date) {
   return diaryDates.value.includes(date)
-}
-
-function getItemsByCategory(categoryId) {
-  return selectedItems.value.filter(item => item.categoryId === categoryId)
 }
 
 async function loadCalendarDates() {
@@ -72,22 +38,7 @@ async function loadCalendarDates() {
 }
 
 async function handleDateClick(date) {
-  selectedDate.value = date
-  try {
-    const [catRes, itemRes, contentRes, imgRes] = await Promise.allSettled([
-      getCategories(),
-      getItems(date),
-      getContent(date),
-      getImages(date)
-    ])
-    if (catRes.status === 'fulfilled') selectedCategories.value = catRes.value.data
-    if (itemRes.status === 'fulfilled') selectedItems.value = itemRes.value.data
-    if (contentRes.status === 'fulfilled') selectedDiary.value = contentRes.value.data
-    if (imgRes.status === 'fulfilled') selectedImages.value = imgRes.value.data
-    dialogVisible.value = true
-  } catch (e) {
-    console.error('加载日记详情失败', e)
-  }
+  router.push(`/calendar/${date}`)
 }
 
 watch(currentDate, loadCalendarDates)
@@ -111,29 +62,5 @@ onMounted(loadCalendarDates)
   background: #409eff;
   border-radius: 50%;
   margin: 2px auto 0;
-}
-.category-group {
-  margin-bottom: 10px;
-}
-.category-group h4 {
-  color: #666;
-  margin-bottom: 5px;
-}
-.item-row {
-  padding: 3px 0;
-}
-.done {
-  background-color: #f0f9eb;
-  border-radius: 4px;
-  padding: 2px 8px;
-}
-.image-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.image-list .el-image {
-  width: 100px;
-  height: 100px;
 }
 </style>

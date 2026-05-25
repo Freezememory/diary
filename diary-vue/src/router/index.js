@@ -25,6 +25,11 @@ const routes = [
         path: 'category',
         name: 'Category',
         component: () => import('../views/Category.vue')
+      },
+      {
+        path: 'calendar/:date',
+        name: 'CalendarDetail',
+        component: () => import('../views/CalendarDetail.vue')
       }
     ]
   }
