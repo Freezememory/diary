@@ -76,7 +76,7 @@
                 />
               </div>
               <div class="item-content" v-else>
-                <span :class="['item-text', { done: item.isDone === 1 }]" @click.stop="!readonly && startEdit(item)">{{ item.content }}</span>
+                <span :class="['item-text', { done: checklistTab === 'pending' && item.isDone === 1 }]" @click.stop="!readonly && startEdit(item)">{{ item.content }}</span>
               </div>
               <button v-if="!readonly" class="item-delete" @click="handleDeleteItem(item.id)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -257,6 +257,7 @@ async function handleToggle(item) {
   const prev = item.isDone
   try {
     await toggleItem(item.id)
+    loadData()
   } catch (e) {
     item.isDone = prev
     console.error('切换状态失败', e)
