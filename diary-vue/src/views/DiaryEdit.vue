@@ -1,27 +1,15 @@
 <template>
   <div class="diary-edit">
-    <!-- 日期导航 -->
-    <div class="date-nav">
-      <button class="date-arrow" @click="changeDate(-1)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-      <div class="date-display">
-        <el-date-picker v-model="currentDate" type="date" format="YYYY年MM月DD日" value-format="YYYY-MM-DD"
-          :clearable="false" @change="loadData" class="date-picker-hidden" />
-        <div class="date-text-trigger" @click="openDatePicker">
-          <span class="date-weekday">{{ weekday }}</span>
-          <span class="date-full">{{ formattedDate }}</span>
-        </div>
+    <!-- 左上角日期区域 -->
+    <div class="top-date-area">
+      <div class="date-clickable" @click="openDatePicker">
+        <span class="date-day">{{ dateDay }}</span>
+        <span class="date-meta">{{ dateWeekday }} · {{ dateMonth }}</span>
       </div>
-      <button class="date-arrow" @click="changeDate(1)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
-      <el-upload :show-file-list="false" :before-upload="handleUpload">
-        <button class="upload-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-          <span>图片</span>
-        </button>
-      </el-upload>
+      <el-date-picker ref="datePickerRef" v-model="currentDate" type="date"
+        format="YYYY年MM月DD日" value-format="YYYY-MM-DD"
+        :clearable="false" :editable="false" @change="handleDateChange"
+        class="hidden-date-picker" />
     </div>
 
     <!-- 主标签页：清单 / 日记 -->
@@ -65,7 +53,7 @@
             <!-- 每个清单项 -->
             <div v-for="item in getFilteredItemsByCategory(category.id)" :key="item.id" class="item-card">
               <label class="item-check">
-                <input type="checkbox" :checked="item.isDone === 1"
+                <input type="checkbox" :checked="item.isDone === 1" :disabled="readonly"
                   @change="handleToggle(item)" />
                 <span class="checkmark">
                   <svg v-if="item.isDone === 1" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -82,15 +70,15 @@
                 />
               </div>
               <div class="item-content" v-else>
-                <span :class="['item-text', { done: item.isDone === 1 }]" @click.stop="startEdit(item)">{{ item.content }}</span>
+                <span :class="['item-text', { done: item.isDone === 1 }]" @click.stop="!readonly && startEdit(item)">{{ item.content }}</span>
               </div>
-              <button class="item-delete" @click="handleDeleteItem(item.id)">
+              <button v-if="!readonly" class="item-delete" @click="handleDeleteItem(item.id)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
 
-            <!-- 添加新清单项（仅待办模式） -->
-            <div v-if="checklistTab === 'pending'" class="add-row">
+            <!-- 添加新清单项（仅待办模式 且 非只读） -->
+            <div v-if="checklistTab === 'pending' && !readonly" class="add-row">
               <input
                 v-model="newItemContents[category.id]"
                 class="add-input"
@@ -111,7 +99,7 @@
       </div>
     </div>
 
-    <!-- 日记内容 -->
+    <!-- 日记内容 + 图片 -->
     <div v-show="activeTab === 'diary'" class="tab-content diary-tab">
       <div class="diary-editor">
         <textarea
@@ -119,27 +107,53 @@
           class="diary-textarea"
           placeholder="记录今天的想法..."
           rows="16"
+          :readonly="readonly"
           @blur="handleSaveContent"
         ></textarea>
         <div class="diary-footer">
           <span class="char-count">{{ textContent.length }} 字</span>
         </div>
       </div>
-    </div>
 
-    <!-- 图片轮播 -->
-    <div v-if="images.length > 0" class="image-gallery">
-      <div class="gallery-label">图片</div>
-      <div class="gallery-track">
-        <div v-for="img in images" :key="img.id" class="gallery-card">
-          <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
-            :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
-            :preview-src-list-index="images.indexOf(img)"
-            preview-teleported
-            class="gallery-img" />
-          <button class="gallery-delete" @click.stop="handleDeleteImage(img.id)">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
+      <!-- 图片区域（日记 tab 内） -->
+      <div v-if="!readonly" class="image-section">
+        <div class="image-header">
+          <span class="gallery-label">图片</span>
+          <el-upload :show-file-list="false" :before-upload="handleUpload">
+            <button class="upload-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              上传
+            </button>
+          </el-upload>
+        </div>
+        <div v-if="images.length > 0" class="gallery-track">
+          <div v-for="img in images" :key="img.id" class="gallery-card">
+            <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
+              :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
+              :preview-src-list-index="images.indexOf(img)"
+              preview-teleported
+              class="gallery-img" />
+            <button class="gallery-delete" @click.stop="handleDeleteImage(img.id)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+        <div v-else class="gallery-empty">
+          <span>暂无图片</span>
+        </div>
+      </div>
+
+      <!-- 只读模式下也展示图片 -->
+      <div v-if="readonly && images.length > 0" class="image-section">
+        <span class="gallery-label">图片</span>
+        <div class="gallery-track">
+          <div v-for="img in images" :key="img.id" class="gallery-card">
+            <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
+              :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
+              :preview-src-list-index="images.indexOf(img)"
+              preview-teleported
+              class="gallery-img" />
+          </div>
         </div>
       </div>
     </div>
@@ -154,7 +168,12 @@ import { getCategories, getItems, createItem, toggleItem, deleteItem, updateItem
   getContent, saveContent, getImages, uploadImage, deleteImage } from '../api/diary'
 import { resolveImageUrl } from '../utils/request'
 
-const currentDate = ref(dayjs().format('YYYY-MM-DD'))
+const props = defineProps({
+  readonly: { type: Boolean, default: false },
+  initialDate: { type: String, default: '' }
+})
+
+const currentDate = ref(props.initialDate || dayjs().format('YYYY-MM-DD'))
 const activeTab = ref('checklist')
 const categories = ref([])
 const items = ref([])
@@ -164,16 +183,14 @@ const newItemContents = reactive({})
 const editingItemId = ref(null)
 const editContent = ref('')
 const checklistTab = ref('pending')
+const datePickerRef = ref(null)
 
-const formattedDate = computed(() => {
-  const d = dayjs(currentDate.value)
-  return `${d.format('M月D日')}`
-})
-
-const weekday = computed(() => {
+const dateDay = computed(() => dayjs(currentDate.value).format('D'))
+const dateWeekday = computed(() => {
   const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   return days[dayjs(currentDate.value).day()]
 })
+const dateMonth = computed(() => dayjs(currentDate.value).format('YYYY年M月'))
 
 const filteredItems = computed(() => {
   return checklistTab.value === 'pending'
@@ -188,13 +205,13 @@ function getFilteredItemsByCategory(categoryId) {
   return filteredItems.value.filter(item => item.categoryId === categoryId)
 }
 
-function changeDate(delta) {
-  currentDate.value = dayjs(currentDate.value).add(delta, 'day').format('YYYY-MM-DD')
-  loadData()
+function openDatePicker() {
+  if (props.readonly) return
+  datePickerRef.value?.focus()
 }
 
-function openDatePicker() {
-  document.querySelector('.date-picker-hidden input')?.click()
+function handleDateChange() {
+  loadData()
 }
 
 async function loadData() {
@@ -244,6 +261,7 @@ async function handleAddItemInline(categoryId) {
 }
 
 async function handleToggle(item) {
+  if (props.readonly) return
   const prev = item.isDone
   try {
     await toggleItem(item.id)
@@ -306,6 +324,7 @@ function cancelEdit() {
 
 let saveTimer = null
 function handleSaveContent() {
+  if (props.readonly) return
   clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
     try {
@@ -338,7 +357,10 @@ async function handleDeleteImage(id) {
   }
 }
 
-onMounted(loadData)
+onMounted(() => {
+  if (props.initialDate) currentDate.value = props.initialDate
+  loadData()
+})
 onUnmounted(() => clearTimeout(saveTimer))
 </script>
 
@@ -348,89 +370,43 @@ onUnmounted(() => clearTimeout(saveTimer))
   margin: 0 auto;
   padding: 24px 16px;
   font-family: 'Georgia', 'Noto Serif SC', serif;
-}
-
-/* ---- 日期导航 ---- */
-.date-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.date-arrow {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid #d6c8b0;
-  background: transparent;
-  color: #8c7a5e;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-.date-arrow:hover {
-  background: #f5f0e8;
-  border-color: #b8a682;
-}
-
-.date-display {
   position: relative;
-  text-align: center;
-  min-width: 140px;
 }
-.date-picker-hidden {
+
+/* ---- 左上角日期区域 ---- */
+.top-date-area {
+  margin-bottom: 24px;
+}
+.date-clickable {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.date-clickable:hover {
+  background: #f0ebe3;
+}
+.date-day {
+  font-size: 32px;
+  font-weight: 700;
+  color: #4a3f30;
+  line-height: 1;
+}
+.date-meta {
+  font-size: 12px;
+  color: #b8a682;
+  letter-spacing: 0.5px;
+}
+.hidden-date-picker {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
   pointer-events: none;
-}
-.date-text-trigger {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 12px;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-.date-text-trigger:hover {
-  background: #f5f0e8;
-}
-.date-weekday {
-  font-size: 11px;
-  color: #b8a682;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-.date-full {
-  font-size: 18px;
-  color: #4a3f30;
-  font-weight: 600;
-}
-
-.upload-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1.5px solid #d6c8b0;
-  background: transparent;
-  color: #8c7a5e;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.upload-btn:hover {
-  background: #f5f0e8;
-  border-color: #b8a682;
 }
 
 /* ---- 主标签页 ---- */
@@ -537,11 +513,9 @@ onUnmounted(() => clearTimeout(saveTimer))
 .checklist-area {
   min-height: 120px;
 }
-
 .category-block {
   margin-bottom: 20px;
 }
-
 .category-label {
   display: flex;
   align-items: center;
@@ -576,7 +550,6 @@ onUnmounted(() => clearTimeout(saveTimer))
 .item-card:hover {
   border-color: #e8e0d4;
 }
-
 .item-check {
   position: relative;
   cursor: pointer;
@@ -602,7 +575,6 @@ onUnmounted(() => clearTimeout(saveTimer))
   background: #8cb369;
   border-color: #8cb369;
 }
-
 .item-content {
   flex: 1;
   min-width: 0;
@@ -622,7 +594,6 @@ onUnmounted(() => clearTimeout(saveTimer))
   text-decoration: line-through;
   color: #b8a682;
 }
-
 .edit-input {
   width: 100%;
   border: none;
@@ -637,7 +608,6 @@ onUnmounted(() => clearTimeout(saveTimer))
 .edit-input:focus {
   border-color: #8c7a5e;
 }
-
 .item-delete {
   flex-shrink: 0;
   width: 26px;
@@ -735,7 +705,7 @@ onUnmounted(() => clearTimeout(saveTimer))
 }
 .diary-textarea {
   width: 100%;
-  min-height: 360px;
+  min-height: 320px;
   padding: 20px;
   border: none;
   background: transparent;
@@ -761,9 +731,15 @@ onUnmounted(() => clearTimeout(saveTimer))
   font-family: -apple-system, sans-serif;
 }
 
-/* ---- 图片画廊 ---- */
-.image-gallery {
-  margin-top: 24px;
+/* ---- 图片区域（日记 tab 内） ---- */
+.image-section {
+  margin-top: 20px;
+}
+.image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 .gallery-label {
   font-size: 12px;
@@ -771,8 +747,24 @@ onUnmounted(() => clearTimeout(saveTimer))
   color: #b8a682;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  margin-bottom: 10px;
-  padding-left: 2px;
+}
+.upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1.5px solid #d6c8b0;
+  background: transparent;
+  color: #8c7a5e;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.upload-btn:hover {
+  background: #f5f0e8;
+  border-color: #b8a682;
 }
 .gallery-track {
   display: flex;
@@ -790,8 +782,8 @@ onUnmounted(() => clearTimeout(saveTimer))
 .gallery-card {
   position: relative;
   flex-shrink: 0;
-  width: 140px;
-  height: 140px;
+  width: 120px;
+  height: 120px;
   border-radius: 10px;
   overflow: hidden;
   background: #f0ebe3;
@@ -825,14 +817,20 @@ onUnmounted(() => clearTimeout(saveTimer))
   background: #fde8e8;
   color: #e57373;
 }
+.gallery-empty {
+  text-align: center;
+  padding: 24px;
+  color: #c4b89a;
+  font-size: 13px;
+}
 
 /* ---- 响应式 ---- */
 @media (max-width: 768px) {
   .diary-edit {
     padding: 16px 12px;
   }
-  .date-nav {
-    gap: 8px;
+  .date-day {
+    font-size: 26px;
   }
   .segment-btn {
     padding: 7px 16px;
@@ -845,8 +843,8 @@ onUnmounted(() => clearTimeout(saveTimer))
     max-width: none;
   }
   .gallery-card {
-    width: 110px;
-    height: 110px;
+    width: 100px;
+    height: 100px;
   }
 }
 </style>
