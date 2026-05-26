@@ -85,25 +85,37 @@ function handleLogout() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e8e0d4;
+  background: #faf8f4;
 }
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+.header-left h1 {
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+  font-size: 18px;
+  color: #4a3f30;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
 .header-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: #8c7a5e;
+  font-size: 13px;
 }
 .hamburger {
   display: none;
   font-size: 20px;
   cursor: pointer;
+  color: #8c7a5e;
 }
 .desktop-aside {
-  border-right: 1px solid #eee;
+  border-right: 1px solid #e8e0d4;
+  background: #faf8f4;
 }
 
 @media (max-width: 768px) {
