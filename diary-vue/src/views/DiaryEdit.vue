@@ -1,5 +1,25 @@
 <template>
   <div class="diary-edit">
+    <!-- 日期显示 -->
+    <div class="date-area">
+      <div class="date-clickable" @click="openDatePicker">
+        <span class="date-weekday">{{ weekday }}</span>
+        <span class="date-display">{{ formattedDate }}</span>
+      </div>
+      <el-date-picker ref="datePickerRef" v-model="currentDate" type="date"
+        format="YYYY年MM月DD日" value-format="YYYY-MM-DD"
+        :clearable="false" :editable="false" @change="loadData"
+        class="hidden-date-picker" />
+      <div class="date-nav-arrows">
+        <button class="date-arrow" @click="changeDate(-1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="date-arrow" @click="changeDate(1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+
     <!-- 主标签页：清单 / 日记 / 图片 -->
     <div class="main-tabs-row">
       <button class="tab-btn" :class="{ active: activeTab === 'checklist' }" @click="activeTab = 'checklist'">
@@ -163,6 +183,17 @@ const newItemContents = reactive({})
 const editingItemId = ref(null)
 const editContent = ref('')
 const checklistTab = ref('pending')
+const datePickerRef = ref(null)
+
+const formattedDate = computed(() => {
+  const d = dayjs(currentDate.value)
+  return `${d.year()}年${d.format('M月D日')}`
+})
+
+const weekday = computed(() => {
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return days[dayjs(currentDate.value).day()]
+})
 
 const filteredItems = computed(() => {
   return checklistTab.value === 'pending'
@@ -175,6 +206,16 @@ const completedCount = computed(() => items.value.filter(i => i.isDone === 1).le
 
 function getFilteredItemsByCategory(categoryId) {
   return filteredItems.value.filter(item => item.categoryId === categoryId)
+}
+
+function openDatePicker() {
+  if (props.readonly) return
+  datePickerRef.value?.focus()
+}
+
+function changeDate(delta) {
+  currentDate.value = dayjs(currentDate.value).add(delta, 'day').format('YYYY-MM-DD')
+  loadData()
 }
 
 async function loadData() {
@@ -334,6 +375,65 @@ onUnmounted(() => clearTimeout(saveTimer))
   padding: 24px 16px;
   font-family: 'Georgia', 'Noto Serif SC', serif;
   position: relative;
+}
+
+/* ---- 日期区域 ---- */
+.date-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.date-clickable {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.date-clickable:hover {
+  background: #f0ebe3;
+}
+.date-weekday {
+  font-size: 11px;
+  color: #b8a682;
+  letter-spacing: 1px;
+}
+.date-display {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4a3f30;
+  line-height: 1.3;
+}
+.hidden-date-picker {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.date-nav-arrows {
+  display: flex;
+  gap: 6px;
+}
+.date-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #d6c8b0;
+  background: transparent;
+  color: #8c7a5e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.date-arrow:hover {
+  background: #f5f0e8;
+  border-color: #b8a682;
 }
 
 /* ---- 主标签页 ---- */
