@@ -2,16 +2,18 @@
   <div class="diary-edit">
     <!-- 日期显示 -->
     <div class="date-area">
-      <button class="date-arrow" @click="changeDate(-1)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
       <div class="date-info">
         <span class="date-weekday">{{ weekday }}</span>
         <span class="date-display">{{ formattedDate }}</span>
       </div>
-      <button class="date-arrow" @click="changeDate(1)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
+      <div class="date-arrows">
+        <button class="date-arrow" @click="changeDate(-1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="date-arrow" @click="changeDate(1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
     </div>
 
     <!-- 主标签页：清单 / 日记 / 图片 -->
@@ -369,17 +371,14 @@ onUnmounted(() => clearTimeout(saveTimer))
 /* ---- 日期区域 ---- */
 .date-area {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 .date-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1px;
-  min-width: 100px;
 }
 .date-weekday {
   font-size: 11px;
@@ -391,6 +390,10 @@ onUnmounted(() => clearTimeout(saveTimer))
   font-weight: 600;
   color: #4a3f30;
   line-height: 1.3;
+}
+.date-arrows {
+  display: flex;
+  gap: 6px;
 }
 .date-arrow {
   width: 32px;
