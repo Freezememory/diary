@@ -1,18 +1,6 @@
 <template>
   <div class="diary-edit">
-    <!-- 左上角日期区域 -->
-    <div class="top-date-area">
-      <div class="date-clickable" @click="openDatePicker">
-        <span class="date-day">{{ dateDay }}</span>
-        <span class="date-meta">{{ dateWeekday }} · {{ dateMonth }}</span>
-      </div>
-      <el-date-picker ref="datePickerRef" v-model="currentDate" type="date"
-        format="YYYY年MM月DD日" value-format="YYYY-MM-DD"
-        :clearable="false" :editable="false" @change="handleDateChange"
-        class="hidden-date-picker" />
-    </div>
-
-    <!-- 主标签页：清单 / 日记 -->
+    <!-- 主标签页：清单 / 日记 / 图片 -->
     <div class="main-tabs-row">
       <button class="tab-btn" :class="{ active: activeTab === 'checklist' }" @click="activeTab = 'checklist'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
@@ -21,6 +9,10 @@
       <button class="tab-btn" :class="{ active: activeTab === 'diary' }" @click="activeTab = 'diary'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
         日记
+      </button>
+      <button class="tab-btn" :class="{ active: activeTab === 'images' }" @click="activeTab = 'images'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        图片
       </button>
     </div>
 
@@ -99,7 +91,7 @@
       </div>
     </div>
 
-    <!-- 日记内容 + 图片 -->
+    <!-- 日记内容 -->
     <div v-show="activeTab === 'diary'" class="tab-content diary-tab">
       <div class="diary-editor">
         <textarea
@@ -114,47 +106,35 @@
           <span class="char-count">{{ textContent.length }} 字</span>
         </div>
       </div>
+    </div>
 
-      <!-- 图片区域（日记 tab 内） -->
-      <div v-if="!readonly" class="image-section">
-        <div class="image-header">
-          <span class="gallery-label">图片</span>
-          <el-upload :show-file-list="false" :before-upload="handleUpload">
-            <button class="upload-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              上传
-            </button>
-          </el-upload>
-        </div>
-        <div v-if="images.length > 0" class="gallery-track">
-          <div v-for="img in images" :key="img.id" class="gallery-card">
-            <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
-              :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
-              :preview-src-list-index="images.indexOf(img)"
-              preview-teleported
-              class="gallery-img" />
-            <button class="gallery-delete" @click.stop="handleDeleteImage(img.id)">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          </div>
-        </div>
-        <div v-else class="gallery-empty">
-          <span>暂无图片</span>
+    <!-- 图片 tab -->
+    <div v-show="activeTab === 'images'" class="tab-content images-tab">
+      <div class="images-header" v-if="!readonly">
+        <el-upload :show-file-list="false" :before-upload="handleUpload">
+          <button class="upload-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            上传图片
+          </button>
+        </el-upload>
+      </div>
+
+      <div v-if="images.length > 0" class="gallery-grid">
+        <div v-for="img in images" :key="img.id" class="gallery-card">
+          <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
+            :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
+            :preview-src-list-index="images.indexOf(img)"
+            preview-teleported
+            class="gallery-img" />
+          <button v-if="!readonly" class="gallery-delete" @click.stop="handleDeleteImage(img.id)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
 
-      <!-- 只读模式下也展示图片 -->
-      <div v-if="readonly && images.length > 0" class="image-section">
-        <span class="gallery-label">图片</span>
-        <div class="gallery-track">
-          <div v-for="img in images" :key="img.id" class="gallery-card">
-            <el-image :src="resolveImageUrl(img.imageUrl)" fit="cover"
-              :preview-src-list="images.map(i => resolveImageUrl(i.imageUrl))"
-              :preview-src-list-index="images.indexOf(img)"
-              preview-teleported
-              class="gallery-img" />
-          </div>
-        </div>
+      <div v-else class="images-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        <span>暂无图片</span>
       </div>
     </div>
   </div>
@@ -183,14 +163,6 @@ const newItemContents = reactive({})
 const editingItemId = ref(null)
 const editContent = ref('')
 const checklistTab = ref('pending')
-const datePickerRef = ref(null)
-
-const dateDay = computed(() => dayjs(currentDate.value).format('D'))
-const dateWeekday = computed(() => {
-  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  return days[dayjs(currentDate.value).day()]
-})
-const dateMonth = computed(() => dayjs(currentDate.value).format('YYYY年M月'))
 
 const filteredItems = computed(() => {
   return checklistTab.value === 'pending'
@@ -203,15 +175,6 @@ const completedCount = computed(() => items.value.filter(i => i.isDone === 1).le
 
 function getFilteredItemsByCategory(categoryId) {
   return filteredItems.value.filter(item => item.categoryId === categoryId)
-}
-
-function openDatePicker() {
-  if (props.readonly) return
-  datePickerRef.value?.focus()
-}
-
-function handleDateChange() {
-  loadData()
 }
 
 async function loadData() {
@@ -371,42 +334,6 @@ onUnmounted(() => clearTimeout(saveTimer))
   padding: 24px 16px;
   font-family: 'Georgia', 'Noto Serif SC', serif;
   position: relative;
-}
-
-/* ---- 左上角日期区域 ---- */
-.top-date-area {
-  margin-bottom: 24px;
-}
-.date-clickable {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  padding: 6px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.date-clickable:hover {
-  background: #f0ebe3;
-}
-.date-day {
-  font-size: 32px;
-  font-weight: 700;
-  color: #4a3f30;
-  line-height: 1;
-}
-.date-meta {
-  font-size: 12px;
-  color: #b8a682;
-  letter-spacing: 0.5px;
-}
-.hidden-date-picker {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
 }
 
 /* ---- 主标签页 ---- */
@@ -731,59 +658,40 @@ onUnmounted(() => clearTimeout(saveTimer))
   font-family: -apple-system, sans-serif;
 }
 
-/* ---- 图片区域（日记 tab 内） ---- */
-.image-section {
-  margin-top: 20px;
+/* ---- 图片 tab ---- */
+.images-tab {
+  padding-top: 4px;
 }
-.image-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.gallery-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #b8a682;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+.images-header {
+  margin-bottom: 16px;
 }
 .upload-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 12px;
-  border-radius: 16px;
-  border: 1.5px solid #d6c8b0;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1.5px dashed #c4b89a;
   background: transparent;
   color: #8c7a5e;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
 }
 .upload-btn:hover {
   background: #f5f0e8;
-  border-color: #b8a682;
+  border-color: #8c7a5e;
+  border-style: solid;
 }
-.gallery-track {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-.gallery-track::-webkit-scrollbar {
-  height: 4px;
-}
-.gallery-track::-webkit-scrollbar-thumb {
-  background: #d6c8b0;
-  border-radius: 2px;
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
 }
 .gallery-card {
   position: relative;
-  flex-shrink: 0;
-  width: 120px;
-  height: 120px;
+  aspect-ratio: 1;
   border-radius: 10px;
   overflow: hidden;
   background: #f0ebe3;
@@ -794,10 +702,10 @@ onUnmounted(() => clearTimeout(saveTimer))
 }
 .gallery-delete {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: none;
   background: rgba(255,255,255,0.85);
@@ -817,20 +725,20 @@ onUnmounted(() => clearTimeout(saveTimer))
   background: #fde8e8;
   color: #e57373;
 }
-.gallery-empty {
-  text-align: center;
-  padding: 24px;
+.images-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
   color: #c4b89a;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ---- 响应式 ---- */
 @media (max-width: 768px) {
   .diary-edit {
     padding: 16px 12px;
-  }
-  .date-day {
-    font-size: 26px;
   }
   .segment-btn {
     padding: 7px 16px;
@@ -842,9 +750,9 @@ onUnmounted(() => clearTimeout(saveTimer))
   .add-input {
     max-width: none;
   }
-  .gallery-card {
-    width: 100px;
-    height: 100px;
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
   }
 }
 </style>
