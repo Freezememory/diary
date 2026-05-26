@@ -2,16 +2,16 @@
   <div class="diary-edit">
     <!-- 日期显示 -->
     <div class="date-area">
-      <div class="date-clickable" @click="openDatePicker">
+      <button class="date-arrow" @click="changeDate(-1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="date-info">
         <span class="date-weekday">{{ weekday }}</span>
         <span class="date-display">{{ formattedDate }}</span>
       </div>
-      <div class="date-picker-wrap">
-        <el-date-picker ref="datePickerRef" v-model="currentDate" type="date"
-          format="YYYY年MM月DD日" value-format="YYYY-MM-DD"
-          :clearable="false" :editable="false" @change="loadData"
-          class="hidden-date-picker" />
-      </div>
+      <button class="date-arrow" @click="changeDate(1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
     </div>
 
     <!-- 主标签页：清单 / 日记 / 图片 -->
@@ -177,7 +177,6 @@ const newItemContents = reactive({})
 const editingItemId = ref(null)
 const editContent = ref('')
 const checklistTab = ref('pending')
-const datePickerRef = ref(null)
 
 const formattedDate = computed(() => {
   const d = dayjs(currentDate.value)
@@ -202,9 +201,9 @@ function getFilteredItemsByCategory(categoryId) {
   return filteredItems.value.filter(item => item.categoryId === categoryId)
 }
 
-function openDatePicker() {
-  if (props.readonly) return
-  datePickerRef.value?.focus()
+function changeDate(delta) {
+  currentDate.value = dayjs(currentDate.value).add(delta, 'day').format('YYYY-MM-DD')
+  loadData()
 }
 
 async function loadData() {
@@ -368,20 +367,18 @@ onUnmounted(() => clearTimeout(saveTimer))
 
 /* ---- 日期区域 ---- */
 .date-area {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   margin-bottom: 20px;
 }
-.date-clickable {
-  display: inline-flex;
+.date-info {
+  display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1px;
-  padding: 6px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.date-clickable:hover {
-  background: #f0ebe3;
+  min-width: 100px;
 }
 .date-weekday {
   font-size: 11px;
@@ -394,17 +391,23 @@ onUnmounted(() => clearTimeout(saveTimer))
   color: #4a3f30;
   line-height: 1.3;
 }
-.date-picker-wrap {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
+.date-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid #d6c8b0;
+  background: transparent;
+  color: #8c7a5e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
-.hidden-date-picker {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
+.date-arrow:hover {
+  background: #f5f0e8;
+  border-color: #b8a682;
 }
 
 /* ---- 主标签页 ---- */
